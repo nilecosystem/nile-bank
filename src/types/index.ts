@@ -147,7 +147,17 @@ export interface UserProfile {
   clientPanelRequested?: boolean;
   clientPanelRequestDate?: string;
   clientPanelRequestReason?: string;
+  authProvider?: 'google' | 'wallet' | 'phone' | 'passkey' | 'email';
+  walletAddress?: string;
+  passkeyRegistered?: boolean;
+  biometric2FAEnabled?: boolean;
+  biometricType?: 'FaceID' | 'TouchID' | 'WindowsHello' | 'Biometric';
+  biometricDeviceName?: string;
+  biometricEnrolledAt?: string;
 }
+
+export type AuthProvider = 'google' | 'wallet' | 'phone' | 'passkey' | 'email';
+export type AuthModalMode = 'login' | 'signup' | 'forgot_password';
 
 export interface CryptoCard {
   id: string;

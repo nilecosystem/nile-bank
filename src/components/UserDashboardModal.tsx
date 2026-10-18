@@ -19,11 +19,12 @@ import {
   X
 } from 'lucide-react';
 import { TREASURY_CRYPTO_WALLETS, TREASURY_BANK_CARDS } from '../data/paymentConfig.ts';
+import { TransactionHistory } from './TransactionHistory.tsx';
 
 interface UserDashboardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultTab?: 'overview' | 'deposit' | 'withdraw' | 'swap';
+  defaultTab?: 'overview' | 'history' | 'deposit' | 'withdraw' | 'swap';
 }
 
 export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
@@ -39,7 +40,25 @@ export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
     showToast 
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw' | 'swap'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'deposit' | 'withdraw' | 'swap'>(defaultTab);
+
+  // Sync activeTab when defaultTab prop updates or when opened
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab, isOpen]);
+
+  // Listen directly for open-dashboard-modal custom events
+  useEffect(() => {
+    const handleOpen = (e: any) => {
+      if (e?.detail?.tab) {
+        setActiveTab(e.detail.tab);
+      }
+    };
+    window.addEventListener('open-dashboard-modal', handleOpen);
+    return () => window.removeEventListener('open-dashboard-modal', handleOpen);
+  }, []);
 
   // 4-Ledger Accounting Balances
   const [liquidUsdt, setLiquidUsdt] = useState<number>(balances.USDT || 5000);
@@ -258,10 +277,11 @@ export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
           </div>
         </div>
 
-        {/* Tab Controls: Overview, Deposit, Withdraw, Swap */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+        {/* Tab Controls: Overview, History, Deposit, Withdraw, Swap */}
+        <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
           {[
-            { id: 'overview', label: 'Ledger Audit & History', icon: Layers },
+            { id: 'overview', label: 'Treasury & Accrual', icon: Layers },
+            { id: 'history', label: 'Transaction History', icon: Clock },
             { id: 'deposit', label: 'Deposit to Treasury', icon: ArrowDownLeft },
             { id: 'withdraw', label: 'Withdrawal Governance', icon: ArrowUpRight },
             { id: 'swap', label: 'Instant Zero-Slippage Swap', icon: ArrowLeftRight }
@@ -271,13 +291,13 @@ export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-[#E5B842] text-[#070D1B] border-[#E5B842] shadow-md font-black'
                     : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-3.5 h-3.5 shrink-0" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -446,30 +466,47 @@ export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
           </div>
         )}
 
+        {/* Tab Content: Dedicated Transaction History */}
+        {activeTab === 'history' && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>Ledger Transaction History</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E5B842]/15 text-[#E5B842] border border-[#E5B842]/30">
+                    Live 4-Ledger Sync
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Verifiable real-time record of all deposits, outbound withdrawals, and staking yield distributions.
+                </p>
+              </div>
+            </div>
+
+            <TransactionHistory initialFilter="all" />
+          </div>
+        )}
+
         {/* Tab Content 4: Overview */}
         {activeTab === 'overview' && (
-          <div className="space-y-3 text-xs">
-            <div className="font-bold text-white">Recent Ledger Transactions & Verification Logs:</div>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {transactions && transactions.length > 0 ? (
-                transactions.slice(0, 6).map((tx) => (
-                  <div key={tx.id} className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs font-mono">
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-white">{tx.recipientOrDetails}</div>
-                      <div className="text-[10px] text-slate-500">{tx.timestamp} · ID: {tx.id}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-emerald-400">+{tx.amount} {tx.currency}</div>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {tx.status.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 text-center text-slate-500">No recent transactions recorded.</div>
-              )}
+          <div className="space-y-4 text-xs">
+            <div className="flex items-center justify-between pt-1">
+              <div className="font-bold text-white text-sm flex items-center gap-2">
+                <span>Recent Ledger Activity & Verification Log</span>
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Live
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('history')}
+                className="text-xs text-[#E5B842] hover:underline font-bold flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <span>Full Transaction Ledger ({transactions.length}) &rarr;</span>
+              </button>
             </div>
+
+            <TransactionHistory limit={4} compact />
           </div>
         )}
       </div>

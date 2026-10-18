@@ -10,6 +10,7 @@ import { KycVerificationModal } from './components/KycVerificationModal.tsx';
 import { WhitepaperModal } from './components/WhitepaperModal.tsx';
 import { SecurityPolicyModal } from './components/SecurityPolicyModal.tsx';
 import { ClientDelegatedPanelModal } from './components/ClientDelegatedPanelModal.tsx';
+import { AuthModal } from './components/AuthModal.tsx';
 
 // Pages
 import { HomePage } from './pages/HomePage.tsx';
@@ -31,6 +32,7 @@ const AppContent: React.FC = () => {
 
   // Global Modals State
   const [dashboardModalOpen, setDashboardModalOpen] = useState(false);
+  const [dashboardDefaultTab, setDashboardDefaultTab] = useState<'overview' | 'history' | 'deposit' | 'withdraw' | 'swap'>('overview');
   const [web3ModalOpen, setWeb3ModalOpen] = useState(false);
   const [kycModalOpen, setKycModalOpen] = useState(false);
   const [whitepaperModalOpen, setWhitepaperModalOpen] = useState(false);
@@ -38,7 +40,12 @@ const AppContent: React.FC = () => {
 
   // Global custom event listeners for modal triggers
   useEffect(() => {
-    const handleOpenDashboard = () => setDashboardModalOpen(true);
+    const handleOpenDashboard = (e?: any) => {
+      if (e?.detail?.tab) {
+        setDashboardDefaultTab(e.detail.tab);
+      }
+      setDashboardModalOpen(true);
+    };
     const handleOpenWeb3 = () => setWeb3ModalOpen(true);
     const handleOpenKyc = () => setKycModalOpen(true);
     const handleOpenWhitepaper = () => setWhitepaperModalOpen(true);
@@ -143,12 +150,16 @@ const AppContent: React.FC = () => {
       <div className="relative z-50">
         <CertificateModal />
         <LiveSupportWidget />
-        <UserDashboardModal isOpen={dashboardModalOpen} onClose={() => setDashboardModalOpen(false)} />
-        <Web3WalletModal isOpen={web3ModalOpen} onClose={() => setWeb3ModalOpen(false)} />
+        <UserDashboardModal 
+          isOpen={dashboardModalOpen} 
+          onClose={() => setDashboardModalOpen(false)} 
+          defaultTab={dashboardDefaultTab}
+        />
         <KycVerificationModal isOpen={kycModalOpen} onClose={() => setKycModalOpen(false)} />
         <WhitepaperModal isOpen={whitepaperModalOpen} onClose={() => setWhitepaperModalOpen(false)} />
         <SecurityPolicyModal isOpen={securityModalOpen} onClose={() => setSecurityModalOpen(false)} />
         <ClientDelegatedPanelModal />
+        <AuthModal />
       </div>
 
       {/* 6. Main Footer */}

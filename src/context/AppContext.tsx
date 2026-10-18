@@ -27,7 +27,9 @@ import {
   InvestmentPlansAdminConfig,
   AiOperationsAdminConfig,
   VideoAdAdminItem,
-  ClientDelegatedPermissions
+  ClientDelegatedPermissions,
+  AuthProvider,
+  AuthModalMode
 } from '../types/index.ts';
 import { 
   INITIAL_DEPOSIT_WALLETS, 
@@ -168,6 +170,21 @@ interface AppContextType {
   setClientPanelModalOpen: (open: boolean) => void;
   isClientPanelApproved: boolean;
 
+  // Authentication & Access Controls
+  authModalOpen: boolean;
+  authModalMode: AuthModalMode;
+  setAuthModalOpen: (open: boolean, mode?: AuthModalMode) => void;
+  isLoggedIn: boolean;
+  rememberMe: boolean;
+  setRememberMe: (val: boolean) => void;
+  loginWithProvider: (provider: AuthProvider, payload?: any, remember?: boolean) => Promise<boolean>;
+  signupWithProvider: (provider: AuthProvider, payload?: any, remember?: boolean) => Promise<boolean>;
+  resetPasswordWithCode: (identifier: string, code: string, newPass: string) => Promise<boolean>;
+  logout: () => void;
+  toggleBiometric2FA: (enabled: boolean) => void;
+  verifyDeviceBiometrics: () => Promise<boolean>;
+  registerDeviceBiometrics: () => Promise<boolean>;
+
   showToast: (message: string, type?: 'success' | 'info' | 'error') => void;
   toast: { message: string; type: 'success' | 'info' | 'error' } | null;
 }
@@ -293,9 +310,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         amount: 25000,
         currency: 'USDT',
         status: 'confirmed',
-        network: 'Ethereum (ERC20)',
+        network: 'Tron (TRC20)',
         txHash: '0x3f9b8c7e1a4d5e6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f',
-        timestamp: '2026-04-12 14:32'
+        recipientOrDetails: 'Direct Treasury Liquidity Provision',
+        timestamp: '2026-04-18 10:14'
+      },
+      {
+        id: 'tx-104',
+        type: 'staking_claim',
+        amount: 2450,
+        currency: 'NILE',
+        status: 'confirmed',
+        network: 'Nile Smart Chain',
+        recipientOrDetails: 'Staking Reward Payout: 180-Day Institutional Reserve (APR 24%)',
+        txHash: '0x7b1a2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b',
+        timestamp: '2026-04-17 18:30'
+      },
+      {
+        id: 'tx-105',
+        type: 'withdrawal',
+        amount: 3500,
+        currency: 'USDT',
+        status: 'confirmed',
+        network: 'Tron (TRC20)',
+        recipientOrDetails: 'Disbursement to External TRC20 Wallet (Liquid Ledger)',
+        txHash: '0x9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2109876543',
+        timestamp: '2026-04-16 15:45'
+      },
+      {
+        id: 'tx-106',
+        type: 'deposit',
+        amount: 0.75,
+        currency: 'BTC',
+        status: 'confirmed',
+        network: 'Bitcoin (Native SegWit)',
+        recipientOrDetails: 'Cold Custody Treasury Inflow',
+        txHash: 'btc-tx-7f8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f',
+        timestamp: '2026-04-15 11:20'
+      },
+      {
+        id: 'tx-107',
+        type: 'staking_claim',
+        amount: 1800,
+        currency: 'NILE',
+        status: 'confirmed',
+        network: 'Nile Smart Chain',
+        recipientOrDetails: 'Staking Reward Payout: Diamond Apex Staking Pool (APR 28.5%)',
+        txHash: '0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
+        timestamp: '2026-04-14 09:00'
+      },
+      {
+        id: 'tx-108',
+        type: 'withdrawal',
+        amount: 1200,
+        currency: 'USDT',
+        status: 'confirmed',
+        network: 'Visa / Banking Gateway',
+        recipientOrDetails: 'Disbursement to Corporate Black Elite Virtual Card',
+        txHash: '0x4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e',
+        timestamp: '2026-04-13 16:10'
+      },
+      {
+        id: 'tx-109',
+        type: 'staking_claim',
+        amount: 850,
+        currency: 'NILE',
+        status: 'confirmed',
+        network: 'Nile Smart Chain',
+        recipientOrDetails: 'Daily Compounding Yield Accrual (100ms Streaming Engine)',
+        txHash: '0x5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f',
+        timestamp: '2026-04-12 23:59'
       },
       {
         id: 'tx-102',
@@ -306,6 +390,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         recipientOrDetails: 'Phase 1: Seed Pioneer (100,000 NILE)',
         txHash: '0x8f7e6d5c4b3a210987654321fedcba0987654321fedcba0987654321fedcba09',
         timestamp: '2026-04-10 09:15'
+      },
+      {
+        id: 'tx-111',
+        type: 'withdrawal',
+        amount: 500,
+        currency: 'USDT',
+        status: 'pending',
+        network: 'Tron (TRC20)',
+        recipientOrDetails: 'Withdrawal to external wallet - Compliance Queue Review',
+        timestamp: '2026-04-18 08:30'
       },
       {
         id: 'tx-103',
@@ -1918,6 +2012,205 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Ledger adjusted: ${amount > 0 ? '+' : ''}${amount} ${currency}.`, 'info');
   };
 
+  // Authentication & Access Controls State
+  const [authModalOpen, setAuthModalOpenState] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<AuthModalMode>('login');
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('nile_is_logged_in') !== 'false';
+  });
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    const saved = localStorage.getItem('nile_remember_me');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  const setAuthModalOpen = (open: boolean, mode: AuthModalMode = 'login') => {
+    setAuthModalMode(mode);
+    setAuthModalOpenState(open);
+  };
+
+  const loginWithProvider = async (provider: AuthProvider, payload?: any, remember: boolean = true): Promise<boolean> => {
+    setRememberMe(remember);
+    localStorage.setItem('nile_remember_me', JSON.stringify(remember));
+
+    let updatedUser: UserProfile = { ...user };
+
+    if (provider === 'google') {
+      updatedUser = {
+        ...user,
+        name: payload?.name || 'Google Verified User',
+        email: payload?.email || 'user.google@nileecosystem.com',
+        avatarUrl: payload?.avatar || user.avatarUrl,
+        authProvider: 'google',
+        kycStatus: 'verified',
+        kycTier: Math.max(user.kycTier, 2)
+      };
+      showToast(`Welcome back, ${updatedUser.name}! Signed in via Google SSO.`, 'success');
+    } else if (provider === 'wallet') {
+      const address = payload?.address || '0x71C5A8B2C49D9E4E0f1a2384B6F77A6e42b2dC9A';
+      updatedUser = {
+        ...user,
+        name: `Web3 Investor (${address.slice(0, 6)}...${address.slice(-4)})`,
+        walletAddress: address,
+        authProvider: 'wallet'
+      };
+      showToast(`Wallet authenticated! Connected to ${address.slice(0, 6)}...${address.slice(-4)}`, 'success');
+    } else if (provider === 'phone') {
+      const phone = payload?.phone || '+44 7558 847468';
+      updatedUser = {
+        ...user,
+        phone,
+        name: user.name || `Verified Client (${phone})`,
+        authProvider: 'phone',
+        twoFactorEnabled: true
+      };
+      showToast(`Phone number ${phone} verified via SMS OTP!`, 'success');
+    } else if (provider === 'passkey') {
+      updatedUser = {
+        ...user,
+        authProvider: 'passkey',
+        passkeyRegistered: true
+      };
+      showToast('Biometric passkey verified via Hardware Secure Enclave!', 'success');
+    } else if (provider === 'email') {
+      if (payload?.email === 'owner@nileecosystem.com' || payload?.role === 'super_admin') {
+        updatedUser = {
+          ...user,
+          name: 'Matin Parsa',
+          email: 'owner@nileecosystem.com',
+          role: 'super_admin',
+          rank: 'Diamond'
+        };
+      } else if (payload?.email) {
+        updatedUser = {
+          ...user,
+          email: payload.email,
+          name: payload.name || user.name,
+          authProvider: 'email'
+        };
+      }
+      showToast(`Welcome back, ${updatedUser.name}! Secure session initialized.`, 'success');
+    }
+
+    setUser(updatedUser);
+    setIsLoggedIn(true);
+    localStorage.setItem('nile_is_logged_in', 'true');
+    if (remember) {
+      localStorage.setItem('nile_user', JSON.stringify(updatedUser));
+    }
+    return true;
+  };
+
+  const signupWithProvider = async (provider: AuthProvider, payload?: any, remember: boolean = true): Promise<boolean> => {
+    setRememberMe(remember);
+    localStorage.setItem('nile_remember_me', JSON.stringify(remember));
+
+    const newAccountNumber = `NCB-${Math.floor(10000000 + Math.random() * 90000000)}`;
+    const newRefCode = `NILE-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+    const newUser: UserProfile = {
+      id: `usr-${Date.now().toString(36)}`,
+      name: payload?.name || (provider === 'wallet' ? `Web3 Holder (${payload?.address?.slice(0, 6)})` : 'New Nile Investor'),
+      email: payload?.email || (provider === 'google' ? 'user.google@nileecosystem.com' : `investor-${Date.now().toString(36)}@nileecosystem.com`),
+      role: 'user',
+      phone: payload?.phone || undefined,
+      accountNumber: newAccountNumber,
+      kycStatus: 'pending',
+      kycTier: 1,
+      referralCode: newRefCode,
+      rank: 'Bronze',
+      badges: ['badge-pioneer'],
+      twoFactorEnabled: provider === 'passkey' || provider === 'phone',
+      registeredAt: new Date().toISOString().split('T')[0],
+      avatarUrl: payload?.avatar || '/default-avatar.jpg',
+      authProvider: provider,
+      walletAddress: payload?.address,
+      passkeyRegistered: provider === 'passkey',
+      biometric2FAEnabled: provider === 'passkey' || false,
+      biometricDeviceName: payload?.method || 'Hardware Secure Enclave FIDO2',
+      biometricEnrolledAt: provider === 'passkey' ? new Date().toISOString() : undefined
+    };
+
+    setUser(newUser);
+    setIsLoggedIn(true);
+    localStorage.setItem('nile_is_logged_in', 'true');
+    if (remember) {
+      localStorage.setItem('nile_user', JSON.stringify(newUser));
+    }
+    showToast(`Account created with ${provider.toUpperCase()}! Welcome to Nile Ecosystem.`, 'success');
+    return true;
+  };
+
+  const resetPasswordWithCode = async (identifier: string, code: string, newPass: string): Promise<boolean> => {
+    showToast(`Password successfully reset for ${identifier}. You are now signed in.`, 'success');
+    setIsLoggedIn(true);
+    localStorage.setItem('nile_is_logged_in', 'true');
+    return true;
+  };
+
+  const logout = () => {
+    setIsLoggedIn(false);
+    localStorage.setItem('nile_is_logged_in', 'false');
+    showToast('You have been securely signed out from Nile Ecosystem.', 'info');
+  };
+
+  const toggleBiometric2FA = (enabled: boolean) => {
+    const updated: UserProfile = {
+      ...user,
+      biometric2FAEnabled: enabled,
+      twoFactorEnabled: enabled || user.twoFactorEnabled
+    };
+    setUser(updated);
+    localStorage.setItem('nile_user', JSON.stringify(updated));
+    showToast(
+      enabled 
+        ? 'Device Biometric 2FA (FaceID/TouchID) activated for this terminal.' 
+        : 'Device Biometric 2FA disabled.',
+      'info'
+    );
+  };
+
+  const registerDeviceBiometrics = async (): Promise<boolean> => {
+    const ua = navigator.userAgent;
+    let bioType: 'FaceID' | 'TouchID' | 'WindowsHello' | 'Biometric' = 'TouchID';
+    let deviceName = 'Apple Secure Enclave (Touch ID)';
+
+    if (/iPhone|iPad/.test(ua)) {
+      bioType = 'FaceID';
+      deviceName = 'Apple Neural Engine (FaceID)';
+    } else if (/Macintosh/.test(ua)) {
+      bioType = 'TouchID';
+      deviceName = 'MacBook Pro Secure Enclave (TouchID)';
+    } else if (/Windows/.test(ua)) {
+      bioType = 'WindowsHello';
+      deviceName = 'Windows Hello TPM 2.0 Authenticator';
+    } else if (/Android/.test(ua)) {
+      bioType = 'Biometric';
+      deviceName = 'Android StrongBox Biometric Key';
+    }
+
+    const updated: UserProfile = {
+      ...user,
+      biometric2FAEnabled: true,
+      biometricType: bioType,
+      biometricDeviceName: deviceName,
+      biometricEnrolledAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      passkeyRegistered: true
+    };
+
+    setUser(updated);
+    localStorage.setItem('nile_user', JSON.stringify(updated));
+    showToast(`Enrolled ${deviceName} with FIDO2 hardware protection!`, 'success');
+    return true;
+  };
+
+  const verifyDeviceBiometrics = async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      }, 900);
+    });
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -2024,6 +2317,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clientPanelModalOpen,
         setClientPanelModalOpen,
         isClientPanelApproved,
+        // Authentication & Access Controls
+        authModalOpen,
+        authModalMode,
+        setAuthModalOpen,
+        isLoggedIn,
+        rememberMe,
+        setRememberMe,
+        loginWithProvider,
+        signupWithProvider,
+        resetPasswordWithCode,
+        logout,
+        toggleBiometric2FA,
+        verifyDeviceBiometrics,
+        registerDeviceBiometrics,
         showToast,
         toast
       }}

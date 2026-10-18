@@ -19,7 +19,11 @@ import {
   X, 
   PhoneCall,
   ChevronDown,
-  Key
+  Key,
+  LogOut,
+  LogIn,
+  UserPlus,
+  Clock
 } from 'lucide-react';
 import { Language } from '../types/index.ts';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
@@ -38,11 +42,15 @@ export const Header: React.FC = () => {
     setCertificateModalOpen,
     setSelectedCertificate,
     setClientPanelModalOpen,
-    isClientPanelApproved
+    isClientPanelApproved,
+    isLoggedIn,
+    setAuthModalOpen,
+    logout
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -285,37 +293,133 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {/* User Account Capsule with Custom Profile Photo */}
-          <div 
-            onClick={() => handleNav('profile')}
-            className="hidden sm:flex items-center gap-2.5 pl-2 pr-3 py-1 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-[#E5B842]/60 cursor-pointer transition-all shadow-sm group"
-            title="View User Profile & Change Photo"
-          >
-            <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-[#E5B842]/60 shadow bg-[#070D1B] shrink-0">
-              {user.avatarUrl ? (
-                <img 
-                  src={user.avatarUrl} 
-                  alt={user.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/default-avatar.jpg';
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full bg-[#E5B842] text-[#070D1B] font-bold text-xs flex items-center justify-center">
-                  {user.name.split(' ').map(n => n[0]).join('')}
+          {/* User Account Capsule with Custom Profile Photo or Login Buttons */}
+          {!isLoggedIn ? (
+            <div className="hidden sm:flex items-center gap-1.5">
+              <button
+                onClick={() => setAuthModalOpen(true, 'login')}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-200 hover:text-white bg-slate-900 border border-slate-700 hover:border-[#E5B842] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title="Sign in with Google, Wallet, Phone, or Passkey"
+              >
+                <LogIn className="w-3.5 h-3.5 text-[#E5B842]" />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => setAuthModalOpen(true, 'signup')}
+                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-[#070D1B] bg-gradient-to-r from-[#E5B842] to-[#F3BA2F] shadow hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Create Verified Institutional Nile Account"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Register</span>
+              </button>
+            </div>
+          ) : (
+            <div className="relative hidden sm:block">
+              <div 
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="flex items-center gap-2.5 pl-2 pr-3 py-1 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-[#E5B842]/60 cursor-pointer transition-all shadow-sm group select-none"
+                title="Account Menu & Options"
+              >
+                <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-[#E5B842]/60 shadow bg-[#070D1B] shrink-0">
+                  {user.avatarUrl ? (
+                    <img 
+                      src={user.avatarUrl} 
+                      alt={user.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/default-avatar.jpg';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#E5B842] text-[#070D1B] font-bold text-xs flex items-center justify-center">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-bold text-white leading-tight group-hover:text-[#E5B842] transition-colors flex items-center gap-1">
+                    <span className="max-w-[90px] truncate">{user.name}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-[#E5B842]" />
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-medium leading-tight">
+                    ${balances.USD.toLocaleString()} USD
+                  </span>
+                </div>
+              </div>
+
+              {/* Account Menu Dropdown */}
+              {userDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 py-2 bg-[#091124] border border-slate-800 rounded-2xl shadow-2xl z-50 animate-fade-in font-sans text-xs">
+                  <div className="px-3 py-2 border-b border-slate-800/80 mb-1">
+                    <div className="font-bold text-white truncate">{user.name}</div>
+                    <div className="text-[10px] text-slate-400 font-mono flex items-center justify-between mt-0.5">
+                      <span>{user.accountNumber}</span>
+                      <span className="text-[#E5B842] font-bold">{user.rank}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => { handleNav('profile'); setUserDropdownOpen(false); }}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-[#E5B842]" />
+                    <span>Profile & KYC Verification</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { 
+                      window.dispatchEvent(new CustomEvent('open-dashboard-modal', { detail: { tab: 'history' } }));
+                      setUserDropdownOpen(false); 
+                    }}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <Clock className="w-4 h-4 text-cyan-400" />
+                    <span>Transaction History</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { 
+                      setClientPanelModalOpen(true);
+                      setUserDropdownOpen(false); 
+                    }}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <Key className="w-4 h-4 text-[#E5B842]" />
+                    <span>Client Delegated Panel</span>
+                  </button>
+
+                  <div className="my-1 border-t border-slate-800/80" />
+
+                  <button
+                    type="button"
+                    onClick={() => { 
+                      setAuthModalOpen(true, 'login'); 
+                      setUserDropdownOpen(false); 
+                    }}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <LogIn className="w-4 h-4 text-emerald-400" />
+                    <span>Switch Account / Sign In</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { 
+                      logout(); 
+                      setUserDropdownOpen(false); 
+                    }}
+                    className="w-full text-left px-3 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
               )}
             </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-bold text-white leading-tight group-hover:text-[#E5B842] transition-colors">
-                {user.name}
-              </span>
-              <span className="text-[10px] text-emerald-400 font-medium leading-tight">
-                ${balances.USD.toLocaleString()} USD
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Mobile Menu Trigger */}
           <button
@@ -331,38 +435,85 @@ export const Header: React.FC = () => {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-[#070D1B] border-b border-slate-800 px-4 pt-3 pb-6 space-y-2 shadow-2xl animate-fade-in">
-          {/* Quick User summary on mobile with custom photo */}
-          <div 
-            onClick={() => handleNav('profile')}
-            className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-[#E5B842]/40"
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-[#E5B842]/60 shadow bg-[#070D1B] shrink-0">
-                {user.avatarUrl ? (
-                  <img 
-                    src={user.avatarUrl} 
-                    alt={user.name} 
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/default-avatar.jpg';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#E5B842] text-[#070D1B] font-bold text-xs flex items-center justify-center">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+          {/* Mobile User Profile or Auth Action */}
+          {!isLoggedIn ? (
+            <div className="grid grid-cols-2 gap-2 p-1 pb-2 border-b border-slate-800">
+              <button
+                onClick={() => { setAuthModalOpen(true, 'login'); setMobileMenuOpen(false); }}
+                className="py-2.5 px-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <LogIn className="w-4 h-4 text-[#E5B842]" />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => { setAuthModalOpen(true, 'signup'); setMobileMenuOpen(false); }}
+                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E5B842] to-[#F3BA2F] text-[#070D1B] font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Register</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div 
+                onClick={() => handleNav('profile')}
+                className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-[#E5B842]/40"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-[#E5B842]/60 shadow bg-[#070D1B] shrink-0">
+                    {user.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.name} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/default-avatar.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#E5B842] text-[#070D1B] font-bold text-xs flex items-center justify-center">
+                        {user.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div>
+                    <div className="text-xs font-bold text-white">{user.name}</div>
+                    <div className="text-[11px] text-slate-400">{user.accountNumber} · <span className="text-[#E5B842]">{user.rank}</span></div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold text-emerald-400">${balances.USD.toLocaleString()}</div>
+                  <div className="text-[10px] text-emerald-500 font-semibold uppercase">Tier {user.kycTier} Verified</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-white">{user.name}</div>
-                <div className="text-[11px] text-slate-400">{user.accountNumber} · <span className="text-[#E5B842]">{user.rank}</span></div>
+
+              {/* Quick Transaction History & Sign Out Buttons for Mobile */}
+              <div className="grid grid-cols-2 gap-1.5 text-xs font-mono">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('open-dashboard-modal', { detail: { tab: 'history' } }));
+                    setMobileMenuOpen(false);
+                  }}
+                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Tx History</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:text-rose-300 flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-xs font-bold text-emerald-400">${balances.USD.toLocaleString()}</div>
-              <div className="text-[10px] text-emerald-500 font-semibold uppercase">Tier {user.kycTier} Verified</div>
-            </div>
-          </div>
+          )}
 
           {/* Quick Client Panel Access */}
           <button

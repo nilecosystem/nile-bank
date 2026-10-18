@@ -30,7 +30,8 @@ import {
   Camera,
   Sparkles,
   Trash2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Fingerprint
 } from 'lucide-react';
 import { KycDocument } from '../types/index.ts';
 import { ChangeProfilePicModal } from '../components/ChangeProfilePicModal.tsx';
@@ -50,7 +51,9 @@ export const UserProfilePage: React.FC = () => {
     referralTiers, 
     submitKyc, 
     showToast,
-    setActiveTab 
+    setActiveTab,
+    toggleBiometric2FA,
+    registerDeviceBiometrics
   } = useApp();
 
   const [activeTabLocal, setActiveTabLocal] = useState<'profile' | 'kyc' | 'aml_api' | 'badges' | 'permissions'>('profile');
@@ -411,6 +414,39 @@ export const UserProfilePage: React.FC = () => {
               }`}
             >
               {twoFactor ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
+
+          {/* Device-Level Biometric Authentication (FaceID / TouchID) */}
+          <div className="p-4 rounded-2xl bg-[#060B17] border border-[#E5B842]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E5B842]/10 border border-[#E5B842]/30 flex items-center justify-center text-[#E5B842] shrink-0">
+                <Fingerprint className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-white flex items-center gap-2">
+                  <span>Device Biometrics (FaceID / TouchID)</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    Hardware Secure Enclave
+                  </span>
+                </div>
+                <div className="text-slate-400 text-[11px]">
+                  {user.biometricDeviceName || 'Apple Secure Enclave / Windows Hello FIDO2'} · Enforces step-up biometric verification on sign-in and disbursements.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                toggleBiometric2FA(!user.biometric2FAEnabled);
+              }}
+              className={`px-4 py-2 rounded-xl font-bold transition-all text-xs cursor-pointer ${
+                user.biometric2FAEnabled 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm' 
+                  : 'bg-[#E5B842] text-[#070D1B] hover:brightness-110'
+              }`}
+            >
+              {user.biometric2FAEnabled ? 'FaceID / TouchID Active' : 'Enroll FaceID / TouchID'}
             </button>
           </div>
 

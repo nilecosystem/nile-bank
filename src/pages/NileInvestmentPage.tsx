@@ -14,6 +14,7 @@ import {
   Layers
 } from 'lucide-react';
 import { RoiGrowthChart } from '../components/RoiGrowthChart.tsx';
+import { InvestmentFaqSection } from '../components/InvestmentFaqSection.tsx';
 
 export const NileInvestmentPage: React.FC = () => {
   const { 
@@ -490,6 +491,9 @@ export const NileInvestmentPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Investment & Staking FAQ Section to address common queries and build trust */}
+      <InvestmentFaqSection />
     </div>
   );
 };
